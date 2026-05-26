@@ -18,7 +18,7 @@ Designed for use with the [CHB-MIT Scalp EEG Database](https://physionet.org/con
 ## Features
 
 - **Detection pipeline**: EDF → features → predict → seizure intervals (seconds + epochs)
-- **Desktop GUI**: pick EDF + model → **Detect Seizures** → see when–when results
+- **Web dashboard**: upload EDF → **Detect Seizures** → intervals, timeline, CSV export (`epilepsy dashboard`)
 - **CLI**: `epilepsy detect --edf recording.edf --model models/seizure_model.joblib`
 - **REST API** (FastAPI): upload feature files for batch prediction
 - **Training** (optional): `epilepsy train-cmd fit` — for notebook/research only
@@ -68,9 +68,20 @@ reports/           # evaluation outputs (generated locally)
 
 ## Quick start (detection)
 
-### 1. Pre-trained model
+### 1. Install and open dashboard
 
-Train once using [`notebooks/legacy/Epilepsy.ipynb`](notebooks/legacy/Epilepsy.ipynb), then save/export your model to:
+```bash
+pip install -e .
+epilepsy dashboard
+```
+
+Opens **http://localhost:8501** — upload an EDF and click **Detect Seizures**.
+
+On Windows you can also double-click `run_dashboard.bat`.
+
+### 2. Pre-trained model
+
+Train locally with your research notebook (stored under `notebooks/`, gitignored), then save your model to:
 
 ```
 models/seizure_model.joblib
@@ -78,7 +89,7 @@ models/seizure_model.joblib
 
 (This file stays on your machine — not in the public repo.)
 
-### 2. Detect seizures in an EDF
+### 3. Detect seizures (CLI)
 
 ```bash
 epilepsy detect --edf data/raw/chb01/chb01_03.edf --model models/seizure_model.joblib
@@ -93,15 +104,7 @@ Detected 1 seizure period(s):
   1. Seizure: 2382s – 2447s (epochs 2382–2447, duration 65s)
 ```
 
-### 3. Desktop GUI
-
-```bash
-epilepsy gui
-```
-
-Select EDF + model → **Detect Seizures** → results show **from–to** windows.
-
-### Optional: training (notebook workflow)
+### Optional: training (local notebook, not in repo)
 
 ```bash
 epilepsy extract-features --edf file.edf --start 2382 --end 2447 --output labeled.parquet
@@ -121,9 +124,9 @@ src/epilepsy_detection/
   evaluation/                # Metrics and plots
   pipeline/                  # End-to-end orchestration
   api/                       # FastAPI app
-  gui/                       # Desktop GUI
+  dashboard/                 # Streamlit web dashboard
   cli.py                     # Typer CLI
-notebooks/legacy/            # Original research notebook
+notebooks/                   # Local research notebooks (gitignored)
 tests/                       # Unit and smoke tests
 ```
 

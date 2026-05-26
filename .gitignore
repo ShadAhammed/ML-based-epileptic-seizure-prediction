@@ -11,8 +11,11 @@ build/
 venv/
 env/
 
-# Jupyter
+# Jupyter — research notebooks stay local (not in public repo)
+/notebooks/**
+!notebooks/README.md
 .ipynb_checkpoints/
+*.ipynb
 
 # IDE
 .idea/

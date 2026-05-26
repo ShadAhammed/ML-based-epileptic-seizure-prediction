@@ -97,4 +97,6 @@ Seizure End Time: 2447 seconds
 - **Reproducibility**: `config/default.yaml`, `requirements.txt`, GitHub Actions CI.
 - **Data**: obtained by the reviewer under PhysioNet terms; not redistributed in this repo.
 
+Research notebooks live under `notebooks/` locally and are **gitignored** — use them to train `models/seizure_model.joblib` for the dashboard.
+
 For questions about the original research context, contact the author listed in [README.md](../README.md).

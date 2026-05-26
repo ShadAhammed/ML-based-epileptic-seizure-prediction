@@ -5,46 +5,41 @@
 **Input:** EDF recording + pre-trained model  
 **Output:** When–when seizure periods occur (start/end in seconds and epochs)
 
-Training is done in the legacy notebook — not in the main app flow.
-
 ## 1. Install
 
 ```bash
+git clone https://github.com/ShadAhammed/ML-based-epileptic-seizure-prediction.git
+cd ML-based-epileptic-seizure-prediction
 pip install -e .
 ```
 
-## 2. Pre-trained model
+## 2. Open the dashboard
 
-After training in `notebooks/legacy/Epilepsy.ipynb`, place your saved model at:
+```bash
+epilepsy dashboard
+```
+
+Browser opens at **http://localhost:8501**:
+
+1. Set model path (default `models/seizure_model.joblib`)
+2. Upload your `.edf` file
+3. Click **Detect Seizures**
+4. View intervals, timeline chart, download CSV
+
+**Windows:** double-click `run_dashboard.bat`
+
+## 3. Pre-trained model
+
+Train with your **local** notebook under `notebooks/` (not in git). Save to:
 
 ```
 models/seizure_model.joblib
 ```
 
-See [docs/DATA.md](../docs/DATA.md) for obtaining CHB-MIT EDF files.
+See [docs/DATA.md](../docs/DATA.md) for CHB-MIT download steps.
 
-## 3. Detect (CLI)
-
-```bash
-epilepsy detect \
-  --edf data/raw/chb01/chb01_03.edf \
-  --model models/seizure_model.joblib
-```
-
-## 4. Detect (GUI)
+## 4. CLI (alternative)
 
 ```bash
-epilepsy gui
+epilepsy detect --edf data/raw/chb01/chb01_03.edf --model models/seizure_model.joblib
 ```
-
-1. Browse → your `.edf` file  
-2. Browse → `models/seizure_model.joblib`  
-3. Click **Detect Seizures**  
-4. Read the **from–to** windows in the results panel  
-
-## 5. Output files
-
-| File | Content |
-|------|---------|
-| Console / GUI | Seizure windows (seconds + epochs) |
-| `reports/detection_result.csv` | Per-epoch prediction (0/1 + probability) |

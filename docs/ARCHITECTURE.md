@@ -11,7 +11,7 @@ flowchart TB
   subgraph entry [Entry points]
     CLI[CLI Typer]
     API[FastAPI]
-    GUI[Desktop GUI]
+    Dashboard[Streamlit Dashboard]
   end
   subgraph core [epilepsy_detection]
     Config[Settings]
@@ -24,7 +24,7 @@ flowchart TB
   end
   CLI --> Pipe
   API --> Pipe
-  GUI --> Pipe
+  Dashboard --> Pipe
   Pipe --> Config
   Pipe --> Data --> Features --> Train --> Model
   Train --> Eval

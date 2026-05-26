@@ -95,12 +95,34 @@ def serve_api(
     uvicorn.run("epilepsy_detection.api.app:app", host=host, port=port, reload=reload)
 
 
-@app.command("gui")
-def launch_gui() -> None:
-    """Launch seizure detection desktop GUI."""
-    from epilepsy_detection.gui.app import run_gui
+@app.command("dashboard")
+def launch_dashboard(
+    port: int = typer.Option(8501, "--port", help="Streamlit server port"),
+    host: str = typer.Option("localhost", "--host", help="Bind address"),
+) -> None:
+    """Launch the web dashboard (Streamlit)."""
+    import subprocess
+    import sys
 
-    run_gui()
+    app_path = Path(__file__).resolve().parents[2] / "dashboard" / "app.py"
+    if not app_path.exists():
+        typer.echo(f"Dashboard not found: {app_path}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"Opening dashboard at http://{host}:{port}")
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            str(app_path),
+            "--server.port",
+            str(port),
+            "--server.address",
+            host,
+        ],
+        check=True,
+    )
 
 
 def main() -> None:
