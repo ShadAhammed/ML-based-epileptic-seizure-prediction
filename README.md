@@ -1,6 +1,6 @@
 # Epilepsy Detection
 
-Professional ML software for **ictal (seizure) period detection** from scalp EEG, refactored from the original CHB-MIT research notebook into a modular OOP Python package.
+Machine learning based software for **ictal (seizure) period detection** from scalp EEG, refactored from the original CHB-MIT research notebook.
 
 > **No clinical data in this repository.** This is intentional: EEG recordings are sensitive and must not be published on public GitHub. The code, tests, and docs are complete; you obtain the dataset separately under [PhysioNet](https://physionet.org/) terms. See **[docs/DATA.md](docs/DATA.md)** for step-by-step download and local setup instructions.
 
@@ -44,14 +44,6 @@ Copy environment template:
 copy .env.example .env
 ```
 
-## Data policy (public repo)
-
-| Included in GitHub | Not included (privacy / license) |
-|--------------------|----------------------------------|
-| Source code, CLI, API, GUI | Raw EDF recordings |
-| Synthetic unit tests | Patient-derived feature files |
-| Config templates | Trained models on real patient data |
-| Data acquisition guide | `.env` with local paths |
 
 **To run on real EEG:** register and get credentialed on [PhysioNet](https://physionet.org/), then download [CHB-MIT](https://physionet.org/content/chbmit/1.0.0/) into a local folder such as `./data/raw/` (gitignored). Full instructions: **[docs/DATA.md](docs/DATA.md)**.
 
@@ -145,10 +137,6 @@ pip install -e ".[dev]"
 ruff check src tests
 pytest tests -v
 ```
-
-## Legacy notebook
-
-The original Jupyter workflow is preserved at [`notebooks/legacy/Epilepsy.ipynb`](notebooks/legacy/Epilepsy.ipynb).
 
 ## License
 
