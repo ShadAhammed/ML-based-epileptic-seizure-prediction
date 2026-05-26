@@ -25,17 +25,21 @@ class EpochFeatureExtractor(FeatureExtractor):
     def extract_from_edf(
         self,
         edf_path: str | Path,
-        seizure_interval: SeizureInterval,
+        seizure_interval: SeizureInterval | None = None,
     ) -> pd.DataFrame:
-        """Extract features from an EDF file with seizure labeling."""
+        """Extract features from an EDF file (optional labels for training only)."""
         _, matrix = self.loader.get_data_matrix(edf_path)
         data = pd.DataFrame(matrix)
         return self.extract_from_matrix(data, seizure_interval)
 
+    def extract_from_edf_for_detection(self, edf_path: str | Path) -> pd.DataFrame:
+        """Extract features from full EDF with no seizure labels (inference)."""
+        return self.extract_from_edf(edf_path, seizure_interval=None)
+
     def extract_from_matrix(
         self,
         data: pd.DataFrame,
-        seizure_interval: SeizureInterval,
+        seizure_interval: SeizureInterval | None = None,
     ) -> pd.DataFrame:
         """Extract features from a channel x samples DataFrame."""
         s = self.settings
@@ -45,7 +49,7 @@ class EpochFeatureExtractor(FeatureExtractor):
 
         baseline_start = 0
         baseline_end = s.baseline_epochs * samples_per_epoch
-        sz_epochs = set(seizure_interval.epoch_range)
+        sz_epochs = set(seizure_interval.epoch_range) if seizure_interval else set()
 
         rows: list[dict] = []
         for epoch_idx in range(n_epochs):
@@ -81,14 +85,19 @@ class EpochFeatureExtractor(FeatureExtractor):
                 row[f"Energy2{ch_num}"] = energies[1]
 
             row["ID"] = epoch_idx + 1
-            row["Out"] = 1 if (epoch_idx + 1) in sz_epochs else 0
+            if seizure_interval is not None:
+                row["Out"] = 1 if (epoch_idx + 1) in sz_epochs else 0
             rows.append(row)
 
         result = pd.DataFrame(rows)
         result = result.set_index("ID")
         return result
 
-    def extract(self, edf_path: str | Path, seizure_interval: SeizureInterval) -> pd.DataFrame:
+    def extract(
+        self,
+        edf_path: str | Path,
+        seizure_interval: SeizureInterval | None = None,
+    ) -> pd.DataFrame:
         return self.extract_from_edf(edf_path, seizure_interval)
 
     def _band_energies(self, epoch_samples: np.ndarray) -> list[float]:

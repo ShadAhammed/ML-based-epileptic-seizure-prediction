@@ -1,4 +1,11 @@
-# Quickstart
+# Quickstart — seizure detection
+
+## What this software does
+
+**Input:** EDF recording + pre-trained model  
+**Output:** When–when seizure periods occur (start/end in seconds and epochs)
+
+Training is done in the legacy notebook — not in the main app flow.
 
 ## 1. Install
 
@@ -6,66 +13,38 @@
 pip install -e .
 ```
 
-## 2. Prepare data
+## 2. Pre-trained model
 
-This repo does **not** ship clinical EEG data. See **[docs/DATA.md](../docs/DATA.md)** for:
-
-- PhysioNet registration and credentialing
-- CHB-MIT download links and folder layout
-- What must stay local (never committed to git)
-
-After download, place EDF files under `data/raw/` and set in `.env`:
+After training in `notebooks/legacy/Epilepsy.ipynb`, place your saved model at:
 
 ```
-EPILEPSY_DATA_DIR=./data/raw
-EPILEPSY_MODEL_DIR=./models
+models/seizure_model.joblib
 ```
 
-## 3. Extract features
+See [docs/DATA.md](../docs/DATA.md) for obtaining CHB-MIT EDF files.
 
-Using epoch indices (as in the legacy notebook example `2382–2447`):
+## 3. Detect (CLI)
 
 ```bash
-epilepsy extract-features \
+epilepsy detect \
   --edf data/raw/chb01/chb01_03.edf \
-  --start 2382 \
-  --end 2447 \
-  --output data/features.parquet
+  --model models/seizure_model.joblib
 ```
 
-## 4. Train
-
-```bash
-epilepsy train --features data/features.parquet --output-dir models/
-```
-
-## 5. Evaluate
-
-```bash
-epilepsy evaluate \
-  --model models/seizure_model.joblib \
-  --features data/features.parquet \
-  --report-dir reports/
-```
-
-## 6. API
-
-```bash
-epilepsy serve-api --model-dir models/
-curl http://127.0.0.1:8000/health
-```
-
-Upload features for prediction:
-
-```bash
-curl -X POST http://127.0.0.1:8000/predict \
-  -F "file=@data/features.parquet"
-```
-
-## 7. GUI
+## 4. Detect (GUI)
 
 ```bash
 epilepsy gui
 ```
 
-Use Browse to select EDF and feature files, set seizure window, then run Extract / Train / Predict / Evaluate.
+1. Browse → your `.edf` file  
+2. Browse → `models/seizure_model.joblib`  
+3. Click **Detect Seizures**  
+4. Read the **from–to** windows in the results panel  
+
+## 5. Output files
+
+| File | Content |
+|------|---------|
+| Console / GUI | Seizure windows (seconds + epochs) |
+| `reports/detection_result.csv` | Per-epoch prediction (0/1 + probability) |

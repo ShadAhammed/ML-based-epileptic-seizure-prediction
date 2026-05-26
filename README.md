@@ -6,14 +6,22 @@ Professional ML software for **ictal (seizure) period detection** from scalp EEG
 
 Designed for use with the [CHB-MIT Scalp EEG Database](https://physionet.org/content/chbmit/1.0.0/) (22 pediatric subjects, 182 annotated seizures).
 
+## Purpose
+
+**Detect when seizures occur in an EDF recording** — not train models (that stays in the legacy notebook).
+
+1. Load an EDF file with EEG data  
+2. Extract per-second features (same logic as notebook `SzData`, without manual seizure window input)  
+3. Run a **pre-trained** classifier  
+4. Report **from–to** time windows where seizure activity is detected  
+
 ## Features
 
-- **OOP package** (`epilepsy_detection`): data loading, feature extraction, training, evaluation
-- **CLI** (`epilepsy` command): extract features, train, predict, evaluate, serve API, launch GUI
-- **REST API** (FastAPI): health check, model info, batch prediction from feature files
-- **Desktop GUI** (tkinter): file pickers and pipeline actions without editing code
-- **Class imbalance**: XGBoost (default), SMOTE + XGBoost, RUSBoost strategies
-- **Reproducible training**: persisted scaler + RFECV + model via `joblib`
+- **Detection pipeline**: EDF → features → predict → seizure intervals (seconds + epochs)
+- **Desktop GUI**: pick EDF + model → **Detect Seizures** → see when–when results
+- **CLI**: `epilepsy detect --edf recording.edf --model models/seizure_model.joblib`
+- **REST API** (FastAPI): upload feature files for batch prediction
+- **Training** (optional): `epilepsy train-cmd fit` — for notebook/research only
 
 ## Author
 
@@ -58,50 +66,46 @@ models/            # trained joblib artifacts (generated locally)
 reports/           # evaluation outputs (generated locally)
 ```
 
-## Quick start
+## Quick start (detection)
 
-### Extract features from EDF
+### 1. Pre-trained model
 
-```bash
-epilepsy extract-features --edf data/raw/chb01/chb01_03.edf --start 2382 --end 2447 --output data/features.parquet
+Train once using [`notebooks/legacy/Epilepsy.ipynb`](notebooks/legacy/Epilepsy.ipynb), then save/export your model to:
+
+```
+models/seizure_model.joblib
 ```
 
-### Train model
+(This file stays on your machine — not in the public repo.)
+
+### 2. Detect seizures in an EDF
 
 ```bash
-epilepsy train --features data/features.parquet --output-dir models/ --strategy xgboost
+epilepsy detect --edf data/raw/chb01/chb01_03.edf --model models/seizure_model.joblib
 ```
 
-Strategies: `xgboost` (default), `smote`, `rusboost`
+Example output:
 
-### Predict
+```
+=== Seizure detection result ===
+Detected 1 seizure period(s):
 
-```bash
-epilepsy predict --model models/seizure_model.joblib --features data/features.parquet --output predictions.csv
+  1. Seizure: 2382s – 2447s (epochs 2382–2447, duration 65s)
 ```
 
-### Evaluate
-
-```bash
-epilepsy evaluate --model models/seizure_model.joblib --features data/features.parquet --report-dir reports/
-```
-
-### REST API
-
-```bash
-epilepsy serve-api --model-dir models/ --port 8000
-```
-
-Endpoints:
-
-- `GET /health`
-- `GET /model/info`
-- `POST /predict` (upload `.csv`, `.parquet`, or `.xlsx` feature file)
-
-### Desktop GUI
+### 3. Desktop GUI
 
 ```bash
 epilepsy gui
+```
+
+Select EDF + model → **Detect Seizures** → results show **from–to** windows.
+
+### Optional: training (notebook workflow)
+
+```bash
+epilepsy extract-features --edf file.edf --start 2382 --end 2447 --output labeled.parquet
+epilepsy train-cmd fit --features labeled.parquet --output-dir models/
 ```
 
 ## Project structure

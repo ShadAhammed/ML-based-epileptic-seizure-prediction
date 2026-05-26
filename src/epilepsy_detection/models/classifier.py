@@ -42,12 +42,12 @@ class SeizureClassifier:
         features: pd.DataFrame,
         label_col: str = "Out",
     ) -> tuple[pd.DataFrame, pd.Series]:
-        """Split feature matrix and labels."""
+        """Split feature matrix and optional labels (labels only needed for training)."""
         if label_col in features.columns:
             x = features.drop(columns=[label_col])
             y = features[label_col]
         else:
-            x = features
+            x = features.copy()
             y = pd.Series(dtype=int)
         return x, y
 

@@ -22,7 +22,8 @@ env/
 # Clinical data and artifacts (root only) — never commit to public GitHub
 /data/**
 !/data/.gitkeep
-/models/
+/models/**
+!/models/.gitkeep
 /reports/
 *.edf
 *.parquet

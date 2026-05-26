@@ -13,9 +13,12 @@ from epilepsy_detection.pipeline.detection_pipeline import DetectionPipeline
 
 app = typer.Typer(
     name="epilepsy",
-    help="ML-based epileptic seizure detection from scalp EEG (CHB-MIT).",
+    help="Detect ictal (seizure) periods in scalp EEG using a pre-trained model.",
     no_args_is_help=True,
 )
+
+train_app = typer.Typer(help="Training commands (notebook/research — not required for detection).")
+app.add_typer(train_app, name="train-cmd")
 
 
 def _pipeline(config: Path | None) -> DetectionPipeline:
@@ -23,64 +26,59 @@ def _pipeline(config: Path | None) -> DetectionPipeline:
     return DetectionPipeline(settings)
 
 
+@app.command("detect")
+def detect(
+    edf: Path = typer.Option(..., "--edf", help="EDF recording to analyze"),
+    model: Path = typer.Option(..., "--model", help="Pre-trained model (.joblib)"),
+    output: Path = typer.Option(
+        Path("reports/detection_result.csv"),
+        "--output",
+        help="Per-epoch predictions CSV",
+    ),
+    config: Optional[Path] = typer.Option(None, "--config", help="Config YAML path"),
+) -> None:
+    """Detect when–when seizures occur in an EDF (main application command)."""
+    pipeline = _pipeline(config)
+    result = pipeline.detect_from_edf(edf, model)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    result.per_epoch.to_csv(output, index=False)
+    typer.echo(result.report)
+    typer.echo(f"\nPer-epoch output: {output}")
+
+
 @app.command("extract-features")
 def extract_features(
     edf: Path = typer.Option(..., "--edf", help="Path to EDF recording"),
-    start: int = typer.Option(..., "--start", help="Seizure start (epoch index or seconds)"),
-    end: int = typer.Option(..., "--end", help="Seizure end (epoch index or seconds)"),
     output: Path = typer.Option(..., "--output", help="Output feature file path"),
-    use_seconds: bool = typer.Option(False, "--use-seconds", help="Interpret start/end as seconds"),
-    config: Optional[Path] = typer.Option(None, "--config", help="Config YAML path"),
+    start: Optional[int] = typer.Option(
+        None, "--start", help="Seizure start (only for labeled training export)"
+    ),
+    end: Optional[int] = typer.Option(
+        None, "--end", help="Seizure end (only for labeled training export)"
+    ),
+    use_seconds: bool = typer.Option(False, "--use-seconds"),
+    config: Optional[Path] = typer.Option(None, "--config"),
 ) -> None:
-    """Extract epoch-level features from an EDF file."""
+    """Extract features from EDF (unlabeled by default; use --start/--end for training labels)."""
     pipeline = _pipeline(config)
-    features = pipeline.extract_features(edf, start, end, output, use_seconds=use_seconds)
+    labeled = start is not None and end is not None
+    features = pipeline.extract_features(
+        edf, start, end, output, use_seconds=use_seconds, labeled=labeled
+    )
     typer.echo(f"Extracted {len(features)} epochs -> {output}")
 
 
-@app.command("train")
-def train(
-    features: Path = typer.Option(..., "--features", help="Feature file (parquet/csv/xlsx)"),
-    output_dir: Path = typer.Option(Path("models"), "--output-dir", help="Model output directory"),
-    strategy: str = typer.Option("xgboost", "--strategy", help="xgboost, smote, or rusboost"),
-    config: Optional[Path] = typer.Option(None, "--config", help="Config YAML path"),
+@train_app.command("fit")
+def train_fit(
+    features: Path = typer.Option(..., "--features"),
+    output_dir: Path = typer.Option(Path("models"), "--output-dir"),
+    strategy: str = typer.Option("xgboost", "--strategy"),
+    config: Optional[Path] = typer.Option(None, "--config"),
 ) -> None:
-    """Train seizure detection model."""
+    """Train model from labeled features (notebook workflow)."""
     pipeline = _pipeline(config)
     artifacts = pipeline.train(features, output_dir, strategy=strategy)  # type: ignore[arg-type]
     typer.echo(f"Model saved to {artifacts.model_path}")
-
-
-@app.command("predict")
-def predict(
-    model: Path = typer.Option(..., "--model", help="Trained model joblib path"),
-    features: Path = typer.Option(..., "--features", help="Feature file for prediction"),
-    output: Path = typer.Option(Path("predictions.csv"), "--output", help="Predictions output"),
-    config: Optional[Path] = typer.Option(None, "--config", help="Config YAML path"),
-) -> None:
-    """Run inference on feature file."""
-    pipeline = _pipeline(config)
-    preds = pipeline.predict(features, model)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    preds.to_csv(output, index=False)
-    typer.echo(f"Predictions saved to {output}")
-
-
-@app.command("evaluate")
-def evaluate(
-    model: Path = typer.Option(..., "--model", help="Trained model joblib path"),
-    features: Path = typer.Option(..., "--features", help="Labeled feature file"),
-    report_dir: Path = typer.Option(Path("reports"), "--report-dir", help="Report output directory"),
-    config: Optional[Path] = typer.Option(None, "--config", help="Config YAML path"),
-) -> None:
-    """Evaluate model and write metrics report."""
-    pipeline = _pipeline(config)
-    report = pipeline.evaluate(features, model, report_dir)
-    typer.echo(f"Accuracy: {report['accuracy']:.4f}")
-    typer.echo(f"Sensitivity: {report['sensitivity']:.4f}")
-    typer.echo(f"Specificity: {report['specificity']:.4f}")
-    if report_dir:
-        typer.echo(f"Reports written to {report_dir}")
 
 
 @app.command("serve-api")
@@ -90,21 +88,16 @@ def serve_api(
     model_dir: Path = typer.Option(Path("models"), "--model-dir"),
     reload: bool = typer.Option(False, "--reload"),
 ) -> None:
-    """Start FastAPI prediction service."""
+    """Start FastAPI service."""
     import os
 
     os.environ["EPILEPSY_MODEL_DIR"] = str(model_dir.resolve())
-    uvicorn.run(
-        "epilepsy_detection.api.app:app",
-        host=host,
-        port=port,
-        reload=reload,
-    )
+    uvicorn.run("epilepsy_detection.api.app:app", host=host, port=port, reload=reload)
 
 
 @app.command("gui")
 def launch_gui() -> None:
-    """Launch optional desktop GUI."""
+    """Launch seizure detection desktop GUI."""
     from epilepsy_detection.gui.app import run_gui
 
     run_gui()
