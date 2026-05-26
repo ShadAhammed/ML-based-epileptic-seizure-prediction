@@ -1,0 +1,19 @@
+sample_rate: 256
+epoch_seconds: 1
+baseline_seconds: 10
+band_edges: [0.5, 12.5, 25.0]
+fir_filter_length: 1001
+fir_window: nuttall
+rfe_min_features: 16
+rfe_cv_folds: 3
+test_size: 0.3
+random_state: 42
+hyperparameter_search:
+  folds: 3
+  n_iter: 5
+  params:
+    min_child_weight: [3, 5, 8]
+    gamma: [0.8, 1, 1.2]
+    subsample: [0.6, 0.8, 1.0]
+    colsample_bytree: [0.6, 0.8, 1.0]
+    max_depth: [5, 7]
