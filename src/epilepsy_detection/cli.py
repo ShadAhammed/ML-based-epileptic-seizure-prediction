@@ -68,6 +68,20 @@ def extract_features(
     typer.echo(f"Extracted {len(features)} epochs -> {output}")
 
 
+@train_app.command("save-model")
+def save_model(
+    features: Path = typer.Option(..., "--features", help="Labeled feature file with Out column"),
+    output_dir: Path = typer.Option(Path("models"), "--output-dir"),
+    strategy: str = typer.Option("smote", "--strategy", help="xgboost, smote, or rusboost"),
+) -> None:
+    """Create models/seizure_model.joblib from labeled features (for dashboard use)."""
+    from epilepsy_detection.notebook_export import save_via_trainer
+
+    path = save_via_trainer(features, output_dir, strategy=strategy)
+    typer.echo(f"Model saved to {path}")
+    typer.echo("Run: epilepsy dashboard")
+
+
 @train_app.command("fit")
 def train_fit(
     features: Path = typer.Option(..., "--features"),

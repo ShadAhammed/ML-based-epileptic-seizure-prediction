@@ -81,13 +81,17 @@ On Windows you can also double-click `run_dashboard.bat`.
 
 ### 2. Pre-trained model
 
-Train locally with your research notebook (stored under `notebooks/`, gitignored), then save your model to:
+The notebook trains the model **in memory only** — you must save it once:
 
-```
-models/seizure_model.joblib
+**Option A** — new cell at end of `notebooks/legacy/Epilepsy.ipynb` (run [`notebooks/save_model_cell.py`](notebooks/save_model_cell.py))
+
+**Option B** — from a labeled feature file:
+
+```bash
+python scripts/save_model.py --features path/to/features.xlsx --strategy smote
 ```
 
-(This file stays on your machine — not in the public repo.)
+This creates `models/seizure_model.joblib` (local only, not in git). See [notebooks/README.md](notebooks/README.md).
 
 ### 3. Detect seizures (CLI)
 

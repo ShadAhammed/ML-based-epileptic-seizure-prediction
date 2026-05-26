@@ -202,6 +202,14 @@ def _render_sidebar() -> tuple[Path, int, bool]:
             f'<p class="{css_class}" style="font-size:0.82rem">{icon} {status_msg}</p>',
             unsafe_allow_html=True,
         )
+        if not found:
+            st.warning(
+                "The notebook trains the model **in memory only** — it does not "
+                "create this file automatically.\n\n"
+                "**Fix:** Run `notebooks/save_model_cell.py` in a new cell at the "
+                "end of `Epilepsy.ipynb` (after SMOTE training), **or** run:\n\n"
+                "`python scripts/save_model.py --features your_features.xlsx`"
+            )
 
         st.divider()
 

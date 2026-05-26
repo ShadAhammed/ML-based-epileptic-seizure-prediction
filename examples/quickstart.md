@@ -28,15 +28,21 @@ Browser opens at **http://localhost:8501**:
 
 **Windows:** double-click `run_dashboard.bat`
 
-## 3. Pre-trained model
+## 3. Create the model file (required once)
 
-Train with your **local** notebook under `notebooks/` (not in git). Save to:
+The notebook trains in memory; the dashboard needs a file on disk.
 
+**From the notebook** (after SMOTE cell): paste and run [`notebooks/save_model_cell.py`](../notebooks/save_model_cell.py) in a new cell.
+
+**From a feature file:**
+
+```bash
+python scripts/save_model.py --features path/to/features.xlsx --strategy smote
 ```
-models/seizure_model.joblib
-```
 
-See [docs/DATA.md](../docs/DATA.md) for CHB-MIT download steps.
+Output: `models/seizure_model.joblib`
+
+See [notebooks/README.md](../notebooks/README.md) for details.
 
 ## 4. CLI (alternative)
 
