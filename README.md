@@ -2,7 +2,9 @@
 
 Professional ML software for **ictal (seizure) period detection** from scalp EEG, refactored from the original CHB-MIT research notebook into a modular OOP Python package.
 
-Based on the [CHB-MIT Scalp EEG Database](https://physionet.org/content/chbmit/1.0.0/) (22 pediatric subjects, 182 annotated seizures).
+> **No clinical data in this repository.** This is intentional: EEG recordings are sensitive and must not be published on public GitHub. The code, tests, and docs are complete; you obtain the dataset separately under [PhysioNet](https://physionet.org/) terms. See **[docs/DATA.md](docs/DATA.md)** for step-by-step download and local setup instructions.
+
+Designed for use with the [CHB-MIT Scalp EEG Database](https://physionet.org/content/chbmit/1.0.0/) (22 pediatric subjects, 182 annotated seizures).
 
 ## Features
 
@@ -34,13 +36,27 @@ Copy environment template:
 copy .env.example .env
 ```
 
-## Data setup
+## Data policy (public repo)
 
-1. Register at [PhysioNet](https://physionet.org/) and request access to [CHB-MIT](https://physionet.org/content/chbmit/1.0.0/).
-2. Download EDF recordings into `EPILEPSY_DATA_DIR` (default: `./data/raw`).
-3. Use `*-summary.txt` seizure annotations or provide start/end epoch indices manually.
+| Included in GitHub | Not included (privacy / license) |
+|--------------------|----------------------------------|
+| Source code, CLI, API, GUI | Raw EDF recordings |
+| Synthetic unit tests | Patient-derived feature files |
+| Config templates | Trained models on real patient data |
+| Data acquisition guide | `.env` with local paths |
 
-Raw EEG files are **not** committed to this repository.
+**To run on real EEG:** register and get credentialed on [PhysioNet](https://physionet.org/), then download [CHB-MIT](https://physionet.org/content/chbmit/1.0.0/) into a local folder such as `./data/raw/` (gitignored). Full instructions: **[docs/DATA.md](docs/DATA.md)**.
+
+**To evaluate the project without downloading data:** run `pytest tests -v` — tests use synthetic signals only.
+
+### Local data layout (after download)
+
+```
+data/raw/          # CHB-MIT EDF + *-summary.txt (you download)
+data/features/     # extracted Parquet/CSV (generated locally)
+models/            # trained joblib artifacts (generated locally)
+reports/           # evaluation outputs (generated locally)
+```
 
 ## Quick start
 
@@ -107,7 +123,9 @@ notebooks/legacy/            # Original research notebook
 tests/                       # Unit and smoke tests
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for design details.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design
+- [docs/DATA.md](docs/DATA.md) — where to obtain CHB-MIT data (required for full pipeline)
+- [examples/quickstart.md](examples/quickstart.md) — end-to-end workflow
 
 ## Development
 

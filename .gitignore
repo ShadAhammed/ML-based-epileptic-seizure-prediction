@@ -19,8 +19,9 @@ env/
 .vscode/
 *.swp
 
-# Data and models (not committed) — root only
-/data/
+# Clinical data and artifacts (root only) — never commit to public GitHub
+/data/**
+!/data/.gitkeep
 /models/
 /reports/
 *.edf

@@ -8,9 +8,13 @@ pip install -e .
 
 ## 2. Prepare data
 
-Download CHB-MIT EDF files to `data/raw/` after PhysioNet credentialing.
+This repo does **not** ship clinical EEG data. See **[docs/DATA.md](../docs/DATA.md)** for:
 
-Set in `.env`:
+- PhysioNet registration and credentialing
+- CHB-MIT download links and folder layout
+- What must stay local (never committed to git)
+
+After download, place EDF files under `data/raw/` and set in `.env`:
 
 ```
 EPILEPSY_DATA_DIR=./data/raw

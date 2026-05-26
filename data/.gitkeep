@@ -1,0 +1,2 @@
+# Place downloaded CHB-MIT EDF files in data/raw/ (see docs/DATA.md).
+# Only this placeholder is tracked; raw EEG and features are gitignored.
