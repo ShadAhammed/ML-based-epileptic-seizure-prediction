@@ -1,9 +1,29 @@
 """
 Epilepsy Seizure Detection Dashboard
+=====================================
 
-Run after clone:
+A professional web interface for detecting ictal (seizure) periods in scalp
+EEG recordings using a pre-trained XGBoost classifier.
+
+Workflow
+--------
+1. Load the pre-trained model (trained locally from the research notebook).
+2. Upload an EDF recording (.edf).
+3. Click **Analyse Recording**.
+4. The dashboard displays:
+   - A clear SEIZURE DETECTED / NO SEIZURE verdict.
+   - Exact from-to time windows for each predicted seizure.
+   - Interactive charts: Gantt timeline, probability curve, raw EEG overlay.
+   - A downloadable CSV of per-epoch predictions.
+
+Running
+-------
+After cloning:
+
     pip install -e .
     epilepsy dashboard
+
+Or on Windows, double-click ``run_dashboard.bat``.
 """
 
 from __future__ import annotations
@@ -15,48 +35,102 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+# ── Path setup (works whether installed as a package or run from repo root) ──
 ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD_DIR = Path(__file__).resolve().parent
-for p in (str(ROOT / "src"), str(DASHBOARD_DIR)):
-    if p not in sys.path:
-        sys.path.insert(0, p)
+for _p in (str(ROOT / "src"), str(DASHBOARD_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from epilepsy_detection.pipeline.detection_pipeline import DetectionPipeline  # noqa: E402
+from epilepsy_detection.data.edf_loader import EDFLoader  # noqa: E402
 
 from charts import (  # noqa: E402
     fig_eeg_with_seizures,
-    fig_epoch_map,
+    fig_epoch_raster,
     fig_probability_timeline,
     fig_seizure_gantt,
     fig_state_timeline,
-    seizure_summary_cards,
+    seizure_summary_html,
 )
 
+# ── Page configuration ────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Epilepsy Seizure Detection",
-    page_icon="📊",
+    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+# ── Global CSS ────────────────────────────────────────────────────────────────
 st.markdown(
     """
     <style>
-    .main-header { font-size: 1.75rem; font-weight: 600; color: #1e3a5f; }
-    .sub-header { color: #5a6a7a; margin-bottom: 1.5rem; }
-    .seizure-banner {
-        background: linear-gradient(90deg, #fef2f2 0%, #fff 100%);
-        border-left: 4px solid #dc2626;
-        padding: 0.75rem 1rem;
-        margin: 0.35rem 0;
-        border-radius: 4px;
-        font-size: 1.05rem;
+    /* Typography */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+
+    /* App header */
+    .app-title {
+        font-size: 1.85rem; font-weight: 700;
+        color: #0f172a; letter-spacing: -0.02em; margin-bottom: 0;
     }
+    .app-subtitle {
+        font-size: 0.95rem; color: #64748b; margin-top: 0.1rem;
+    }
+
+    /* Verdict cards */
+    .verdict-seizure {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border: 2px solid #b91c1c;
+        border-radius: 12px; padding: 1.4rem 1.8rem;
+        text-align: center;
+    }
+    .verdict-seizure h2 { color: #b91c1c; font-size: 1.7rem; margin: 0 0 0.3rem 0; }
+    .verdict-seizure p  { color: #7f1d1d; font-size: 1rem; margin: 0; }
+
+    .verdict-normal {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 2px solid #16a34a;
+        border-radius: 12px; padding: 1.4rem 1.8rem;
+        text-align: center;
+    }
+    .verdict-normal h2 { color: #15803d; font-size: 1.7rem; margin: 0 0 0.3rem 0; }
+    .verdict-normal p  { color: #14532d; font-size: 1rem; margin: 0; }
+
+    /* Metric cards */
     div[data-testid="stMetric"] {
-        background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
-        padding: 1rem;
-        border-radius: 8px;
+        background: #f8fafc;
         border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.9rem 1.1rem;
+    }
+    div[data-testid="stMetric"] > div:first-child { color: #64748b; font-size: 0.82rem; }
+    div[data-testid="stMetric"] > div:last-child  { color: #0f172a; font-size: 1.35rem; }
+
+    /* Seizure window badge */
+    .sz-window {
+        background: #fef2f2;
+        border-left: 4px solid #b91c1c;
+        border-radius: 0 8px 8px 0;
+        padding: 0.6rem 1rem;
+        margin: 0.4rem 0;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    /* Model status badge */
+    .model-ok   { color: #16a34a; font-weight: 600; }
+    .model-miss { color: #b91c1c; font-weight: 600; }
+
+    /* Divider */
+    hr.light { border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+
+    /* Step indicator */
+    .step-label {
+        font-size: 0.78rem; font-weight: 600; color: #64748b;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        margin-bottom: 0.3rem;
     }
     </style>
     """,
@@ -64,181 +138,401 @@ st.markdown(
 )
 
 
-@st.cache_resource
-def get_pipeline() -> DetectionPipeline:
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+@st.cache_resource(show_spinner=False)
+def _get_pipeline() -> DetectionPipeline:
+    """Single shared pipeline instance (cached across Streamlit reruns)."""
     return DetectionPipeline()
 
 
-def default_model_path() -> Path:
+def _default_model_path() -> Path:
+    """Resolve the default model location relative to the repo root."""
     return ROOT / "models" / "seizure_model.joblib"
 
 
-def main() -> None:
-    st.markdown('<p class="main-header">Epilepsy Seizure Detection</p>', unsafe_allow_html=True)
+def _model_status(path: Path) -> tuple[bool, str]:
+    """Return (found, message) for a given model path."""
+    if path.exists():
+        size_kb = path.stat().st_size / 1024
+        return True, f"{path.name}  ({size_kb:,.0f} KB)"
+    return False, f"Not found: {path}"
+
+
+def _recording_info(edf_bytes: bytes, filename: str) -> dict | None:
+    """Extract EDF metadata without storing the file to disk permanently."""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".edf", delete=False) as tmp:
+            tmp.write(edf_bytes)
+            info = EDFLoader().recording_info(tmp.name)
+            Path(tmp.name).unlink(missing_ok=True)
+        return info
+    except Exception:
+        return None
+
+
+# ── Sidebar ───────────────────────────────────────────────────────────────────
+
+def _render_sidebar() -> tuple[Path, int, bool]:
+    """Render the sidebar and return (model_path, channel_idx, show_eeg)."""
+    with st.sidebar:
+        st.markdown(
+            "<div style='text-align:center; padding:0.5rem 0 1rem'>"
+            "<span style='font-size:2.2rem'>🧠</span><br>"
+            "<span style='font-weight:700; font-size:1.1rem; color:#0f172a'>Epilepsy Detection</span><br>"
+            "<span style='font-size:0.8rem; color:#64748b'>CHB-MIT · XGBoost · v1.0</span>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        st.divider()
+
+        # --- Model configuration ---
+        st.markdown('<p class="step-label">Step 1 · Model</p>', unsafe_allow_html=True)
+        raw_path = st.text_input(
+            "Model path (.joblib)",
+            value=str(_default_model_path()),
+            label_visibility="collapsed",
+            help="Path to seizure_model.joblib trained from the research notebook.",
+        )
+        model_path = Path(raw_path)
+        found, status_msg = _model_status(model_path)
+        css_class = "model-ok" if found else "model-miss"
+        icon = "✔" if found else "✘"
+        st.markdown(
+            f'<p class="{css_class}" style="font-size:0.82rem">{icon} {status_msg}</p>',
+            unsafe_allow_html=True,
+        )
+
+        st.divider()
+
+        # --- Visualisation options ---
+        st.markdown('<p class="step-label">Options</p>', unsafe_allow_html=True)
+        show_eeg = st.checkbox("Show EEG signal overlay", value=True)
+        channel_idx = st.number_input(
+            "EEG channel to display",
+            min_value=0,
+            max_value=99,
+            value=0,
+            help="Zero-based channel index.  Channel 0 is typically EEG FP1-F7.",
+        )
+
+        st.divider()
+
+        # --- About panel ---
+        with st.expander("About this tool"):
+            st.markdown(
+                """
+                **Epilepsy Seizure Detection** applies a pre-trained
+                XGBoost classifier to CHB-MIT-style scalp EEG recordings.
+
+                **How the model works:**
+                Each 1-second epoch is characterised by statistical and
+                band-energy features per channel (10 features × N channels).
+                The model predicts whether each epoch is ictal (seizure)
+                or interictal (normal).  Consecutive ictal epochs are
+                merged into reported seizure windows.
+
+                **Data privacy:** No EEG data is stored in this repository.
+                See `docs/DATA.md` for CHB-MIT access instructions.
+                """,
+                unsafe_allow_html=False,
+            )
+
+    return model_path, int(channel_idx), show_eeg
+
+
+# ── Welcome screen ────────────────────────────────────────────────────────────
+
+def _render_welcome() -> None:
+    """Show usage instructions when no analysis has been run yet."""
     st.markdown(
-        '<p class="sub-header">Upload an EDF recording to detect and visualize ictal (seizure) time windows.</p>',
+        """
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;
+                    padding:2rem; text-align:center; margin-top:1rem;">
+            <div style="font-size:2.5rem; margin-bottom:0.5rem">📂</div>
+            <h3 style="color:#0f172a; margin:0 0 0.5rem">Upload an EDF recording</h3>
+            <p style="color:#64748b; max-width:420px; margin:0 auto">
+                Select a <code>.edf</code> file from the CHB-MIT database or any
+                compatible EEG system, then click <strong>Analyse Recording</strong>.
+            </p>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-
-    with st.sidebar:
-        st.header("Configuration")
-        model_path = st.text_input(
-            "Pre-trained model path",
-            value=str(default_model_path()),
-            help="Train locally with your research notebook; place seizure_model.joblib in models/",
-        )
-        show_eeg = st.checkbox("Show EEG waveform preview", value=True)
-        st.divider()
-        st.markdown("**Data policy**")
-        st.caption(
-            "No clinical EEG is stored in this repo. "
-            "Obtain CHB-MIT data via [PhysioNet](https://physionet.org/content/chbmit/1.0.0/). "
-            "See docs/DATA.md."
-        )
-
-    uploaded = st.file_uploader(
-        "Upload EDF recording",
-        type=["edf"],
-        help="Scalp EEG recording in European Data Format (.edf)",
-    )
-
-    if uploaded is not None:
-        st.caption(f"Loaded: **{uploaded.name}** ({uploaded.size / 1e6:.2f} MB)")
-
-    run_detect = st.button("Detect Seizures", type="primary")
-
-    if st.session_state.get("detection_result") and not run_detect:
-        _render_results(
-            st.session_state["detection_result"],
-            st.session_state.get("edf_temp_path"),
-            show_eeg,
-        )
-        return
-
-    if not run_detect:
-        _show_welcome()
-        return
-
-    if uploaded is None:
-        st.error("Please upload an EDF file before running detection.")
-        return
-
-    model_file = Path(model_path)
-    if not model_file.exists():
-        st.error(
-            f"Model not found: `{model_file}`\n\n"
-            "Train a model with your local research notebook and save it as "
-            "`models/seizure_model.joblib`."
-        )
-        return
-
-    with st.spinner("Extracting features and running detection…"):
-        try:
-            old = st.session_state.pop("edf_temp_path", None)
-            if old and Path(old).exists():
-                Path(old).unlink(missing_ok=True)
-
-            with tempfile.NamedTemporaryFile(suffix=".edf", delete=False) as tmp:
-                tmp.write(uploaded.getvalue())
-                tmp_path = Path(tmp.name)
-
-            pipeline = get_pipeline()
-            result = pipeline.detect_from_edf(tmp_path, model_file)
-
-            st.session_state["detection_result"] = result
-            st.session_state["edf_temp_path"] = tmp_path
-            st.session_state["edf_name"] = uploaded.name
-        except Exception as exc:
-            st.error(f"Detection failed: {exc}")
-            return
-
-    _render_results(result, st.session_state.get("edf_temp_path"), show_eeg)
-
-
-def _show_welcome() -> None:
-    st.info(
-        "Upload an EDF file and click **Detect Seizures** to see **from–to** predicted seizure windows."
-    )
+    st.markdown("<hr class='light'>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    c1.metric("Input", "EDF recording")
-    c2.metric("Output", "When → when seizure periods")
-    c3.metric("Resolution", "1 second per epoch")
+    c1.info("**Input:** EDF recording (.edf)")
+    c2.info("**Output:** Seizure time windows (seconds)")
+    c3.info("**Resolution:** 1 epoch = 1 second")
 
 
-def _render_results(result, edf_path: Path | None, show_eeg: bool) -> None:
-    st.success("Detection complete")
+# ── Results rendering ─────────────────────────────────────────────────────────
 
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Recording length", f"{result.recording_seconds:,} s")
-    m2.metric("Epochs analyzed", f"{result.n_epochs:,}")
-    m3.metric("Seizures detected", len(result.seizures))
-    m4.metric("Ictal epochs", f"{int(result.per_epoch['predicted'].sum()):,}")
+def _render_results(result, edf_path: Path | None, channel_idx: int, show_eeg: bool) -> None:
+    """Render the full analysis results panel."""
 
-    st.subheader("Predicted seizure periods (when → when)")
-    if result.seizures:
-        for line in seizure_summary_cards(result.seizures):
-            st.markdown(f'<div class="seizure-banner">{line}</div>', unsafe_allow_html=True)
-
-        rows = [
-            {
-                "Seizure": f"#{i}",
-                "From (s)": s.start_seconds,
-                "To (s)": s.end_seconds,
-                "Duration (s)": s.duration_seconds,
-                "From (epoch)": s.start_epoch,
-                "To (epoch)": s.end_epoch,
-            }
-            for i, s in enumerate(result.seizures, 1)
-        ]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    # ── Verdict ──────────────────────────────────────────────────────────────
+    if result.seizure_detected:
+        n = len(result.seizures)
+        total_s = sum(s.duration_seconds for s in result.seizures)
+        st.markdown(
+            f"""
+            <div class="verdict-seizure">
+                <h2>⚠ SEIZURE DETECTED</h2>
+                <p>{n} seizure period{'s' if n > 1 else ''} identified &nbsp;·&nbsp;
+                   Total ictal duration: <strong>{total_s}s</strong></p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     else:
-        st.warning("No seizure activity detected in this recording.")
+        st.markdown(
+            """
+            <div class="verdict-normal">
+                <h2>✓ NO SEIZURE DETECTED</h2>
+                <p>The classifier found no ictal activity in this recording.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    st.subheader("Visual timeline")
-    tab_gantt, tab_state, tab_prob, tab_epoch, tab_eeg = st.tabs(
-        ["When → when (bars)", "State along recording", "Probability", "Epoch map", "EEG + seizures"]
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Summary metrics ───────────────────────────────────────────────────────
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Recording duration", f"{result.recording_seconds:,} s")
+    m2.metric("Epochs analysed", f"{result.n_epochs:,}")
+    m3.metric("Seizures detected", str(len(result.seizures)))
+    ictal_pct = (
+        100.0 * int(result.per_epoch["predicted"].sum()) / result.n_epochs
+        if result.n_epochs > 0
+        else 0.0
+    )
+    m4.metric("Ictal fraction", f"{ictal_pct:.1f}%")
+
+    st.markdown("<hr class='light'>", unsafe_allow_html=True)
+
+    # ── Seizure window table ──────────────────────────────────────────────────
+    st.markdown("#### Seizure windows (from → to)")
+    if result.seizures:
+        for html in seizure_summary_html(result.seizures):
+            st.markdown(f'<div class="sz-window">{html}</div>', unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        table_rows = [
+            {
+                "Seizure #": f"#{i}",
+                "Start (s)": sz.start_seconds,
+                "End (s)": sz.end_seconds,
+                "Duration (s)": sz.duration_seconds,
+                "Start epoch": sz.start_epoch,
+                "End epoch": sz.end_epoch,
+            }
+            for i, sz in enumerate(result.seizures, 1)
+        ]
+        st.dataframe(
+            pd.DataFrame(table_rows),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Start (s)": st.column_config.NumberColumn(format="%d s"),
+                "End (s)": st.column_config.NumberColumn(format="%d s"),
+                "Duration (s)": st.column_config.NumberColumn(format="%d s"),
+            },
+        )
+    else:
+        st.info("No seizure windows detected in this recording.")
+
+    st.markdown("<hr class='light'>", unsafe_allow_html=True)
+
+    # ── Visualisation tabs ────────────────────────────────────────────────────
+    st.markdown("#### Visualisations")
+    tab_gantt, tab_prob, tab_state, tab_eeg, tab_raster = st.tabs(
+        ["Seizure windows", "Probability", "State timeline", "EEG signal", "Epoch raster"]
     )
 
     with tab_gantt:
+        st.caption(
+            "Each bar shows one detected seizure window against the full recording length."
+        )
         st.plotly_chart(
             fig_seizure_gantt(result.seizures, result.recording_seconds),
             use_container_width=True,
         )
 
-    with tab_state:
-        st.plotly_chart(
-            fig_state_timeline(result.per_epoch, result.seizures),
-            use_container_width=True,
-        )
-
     with tab_prob:
+        st.caption(
+            "Per-second seizure probability from the XGBoost classifier.  "
+            "Red shading marks predicted ictal periods."
+        )
         st.plotly_chart(
             fig_probability_timeline(result.per_epoch, result.seizures),
             use_container_width=True,
         )
 
-    with tab_epoch:
-        st.plotly_chart(fig_epoch_map(result.per_epoch), use_container_width=True)
+    with tab_state:
+        st.caption(
+            "Binary ictal / interictal state along the full recording."
+        )
+        st.plotly_chart(
+            fig_state_timeline(result.per_epoch, result.seizures),
+            use_container_width=True,
+        )
 
     with tab_eeg:
-        if show_eeg and edf_path and Path(edf_path).exists():
-            fig = fig_eeg_with_seizures(edf_path, result.seizures)
+        if show_eeg and edf_path and edf_path.exists():
+            st.caption(
+                f"Raw EEG channel {channel_idx} with predicted seizure windows highlighted "
+                "in red.  Signal is down-sampled for display."
+            )
+            fig = fig_eeg_with_seizures(edf_path, result.seizures, channel_idx=channel_idx)
             if fig:
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                st.warning("Could not render EEG preview.")
+                st.warning("EEG preview unavailable — check that the EDF file is valid.")
         else:
-            st.caption("Enable **Show EEG waveform preview** in the sidebar to overlay seizures on the signal.")
+            st.info(
+                'Enable **Show EEG signal overlay** in the sidebar, '
+                "then re-run the analysis to see the raw waveform."
+            )
 
-    with st.expander("Per-epoch predictions (table)"):
+    with tab_raster:
+        st.caption(
+            "Each dot is one epoch (1 second).  "
+            "Crimson dots are predicted ictal; grey dots are predicted interictal."
+        )
+        st.plotly_chart(fig_epoch_raster(result.per_epoch), use_container_width=True)
+
+    # ── Per-epoch detail table (collapsed by default) ─────────────────────────
+    with st.expander("Per-epoch prediction detail"):
         st.dataframe(result.per_epoch, use_container_width=True)
 
-    st.download_button(
-        "Download predictions (CSV)",
-        result.per_epoch.to_csv(index=False),
-        file_name="detection_result.csv",
-        mime="text/csv",
+    # ── Download ──────────────────────────────────────────────────────────────
+    st.markdown("<hr class='light'>", unsafe_allow_html=True)
+    col_dl, col_rpt = st.columns([2, 3])
+    with col_dl:
+        st.download_button(
+            label="Download predictions (CSV)",
+            data=result.per_epoch.to_csv(index=False),
+            file_name="seizure_detection_result.csv",
+            mime="text/csv",
+        )
+    with col_rpt:
+        st.download_button(
+            label="Download text report",
+            data=result.report,
+            file_name="seizure_detection_report.txt",
+            mime="text/plain",
+        )
+
+
+# ── Main app ──────────────────────────────────────────────────────────────────
+
+def main() -> None:
+    """Main Streamlit entry point."""
+
+    # ── Sidebar ───────────────────────────────────────────────────────────────
+    model_path, channel_idx, show_eeg = _render_sidebar()
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    st.markdown(
+        '<p class="app-title">Epilepsy Seizure Detection</p>'
+        '<p class="app-subtitle">Upload an EEG recording to detect and visualise ictal periods '
+        "using a pre-trained XGBoost classifier.</p>",
+        unsafe_allow_html=True,
     )
+    st.markdown("<hr class='light'>", unsafe_allow_html=True)
+
+    # ── Upload panel ──────────────────────────────────────────────────────────
+    st.markdown('<p class="step-label">Step 2 · Upload EDF recording</p>', unsafe_allow_html=True)
+    uploaded = st.file_uploader(
+        "EDF file",
+        type=["edf"],
+        label_visibility="collapsed",
+        help="European Data Format scalp EEG recording (.edf)",
+    )
+
+    # Show lightweight recording metadata immediately after upload
+    if uploaded is not None:
+        info = _recording_info(uploaded.getvalue(), uploaded.name)
+        if info:
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("File", uploaded.name)
+            c2.metric("Channels", info["n_channels"])
+            c3.metric("Sample rate", f"{info['sample_rate']} Hz")
+            c4.metric("Duration", f"{info['duration_seconds']:.1f} s")
+
+    # ── Analyse button ────────────────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<p class="step-label">Step 3 · Run analysis</p>', unsafe_allow_html=True)
+    run = st.button("Analyse Recording", type="primary", use_container_width=False)
+
+    # ── Show existing result without re-running ───────────────────────────────
+    if st.session_state.get("result") and not run:
+        st.markdown("<hr class='light'>", unsafe_allow_html=True)
+        st.markdown('<p class="step-label">Step 4 · Results</p>', unsafe_allow_html=True)
+        edf_cached = st.session_state.get("edf_temp_path")
+        _render_results(
+            st.session_state["result"],
+            Path(edf_cached) if edf_cached else None,
+            channel_idx,
+            show_eeg,
+        )
+        return
+
+    if not run:
+        _render_welcome()
+        return
+
+    # ── Validation ────────────────────────────────────────────────────────────
+    if uploaded is None:
+        st.error("Please upload an EDF file.")
+        return
+
+    if not model_path.exists():
+        st.error(
+            f"Model not found at `{model_path}`.  "
+            "Train the model with the research notebook and place "
+            "`seizure_model.joblib` in the `models/` folder."
+        )
+        return
+
+    # ── Run detection ─────────────────────────────────────────────────────────
+    progress = st.progress(0, text="Preparing…")
+    try:
+        # Clean up any previous temp file
+        old = st.session_state.pop("edf_temp_path", None)
+        if old:
+            Path(old).unlink(missing_ok=True)
+
+        progress.progress(10, text="Writing EDF to disk…")
+        with tempfile.NamedTemporaryFile(suffix=".edf", delete=False) as tmp:
+            tmp.write(uploaded.getvalue())
+            tmp_path = Path(tmp.name)
+
+        progress.progress(30, text="Extracting features (this may take a moment)…")
+        pipeline = _get_pipeline()
+
+        progress.progress(60, text="Running XGBoost classifier…")
+        result = pipeline.detect_from_edf(tmp_path, model_path)
+
+        progress.progress(90, text="Generating charts…")
+        st.session_state["result"] = result
+        st.session_state["edf_temp_path"] = str(tmp_path)
+
+        progress.progress(100, text="Done.")
+        progress.empty()
+
+    except Exception as exc:
+        progress.empty()
+        st.error(f"Analysis failed: {exc}")
+        return
+
+    # ── Render results ────────────────────────────────────────────────────────
+    st.markdown("<hr class='light'>", unsafe_allow_html=True)
+    st.markdown('<p class="step-label">Step 4 · Results</p>', unsafe_allow_html=True)
+    _render_results(result, tmp_path, channel_idx, show_eeg)
+
 
 if __name__ == "__main__":
     main()

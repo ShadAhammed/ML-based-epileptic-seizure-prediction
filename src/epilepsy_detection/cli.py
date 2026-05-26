@@ -108,6 +108,12 @@ def launch_dashboard(
     if not app_path.exists():
         typer.echo(f"Dashboard not found: {app_path}", err=True)
         raise typer.Exit(1)
+    import os
+
+    root = Path(__file__).resolve().parents[2]
+    os.environ.setdefault("STREAMLIT_BROWSER_GATHER_USAGE_STATS", "false")
+    os.environ.setdefault("STREAMLIT_SERVER_HEADLESS", "true")
+
     typer.echo(f"Opening dashboard at http://{host}:{port}")
     subprocess.run(
         [
@@ -120,8 +126,13 @@ def launch_dashboard(
             str(port),
             "--server.address",
             host,
+            "--server.headless",
+            "true",
+            "--browser.gatherUsageStats",
+            "false",
         ],
         check=True,
+        cwd=str(root),
     )
 
 
