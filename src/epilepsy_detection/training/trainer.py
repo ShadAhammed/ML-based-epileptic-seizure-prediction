@@ -8,7 +8,7 @@ optional imbalance handling, hyperparameter search, and artifact persistence.
 Persisted artifacts (saved with :mod:`joblib`) contain:
 
 * The fitted :class:`~epilepsy_detection.models.classifier.SeizureClassifier`
-  (includes scaler and RFECV selector — no preprocessing state is lost).
+  (includes scaler and RFECV selector - no preprocessing state is lost).
 * The training strategy name.
 * The original feature column list.
 * The :class:`~epilepsy_detection.config.settings.Settings` used during training.
@@ -115,9 +115,9 @@ class SeizureTrainer:
         Args:
             features: Labeled feature DataFrame (must contain an ``"Out"`` column).
             strategy: Imbalance handling strategy.
-                - ``"xgboost"`` — standard XGBoost with hyperparameter search.
-                - ``"smote"`` — SMOTE oversampling then XGBoost.
-                - ``"rusboost"`` — RUSBoost ensemble.
+                - ``"xgboost"`` - standard XGBoost with hyperparameter search.
+                - ``"smote"`` - SMOTE oversampling then XGBoost.
+                - ``"rusboost"`` - RUSBoost ensemble.
             run_hyperparameter_search: If ``True`` and *strategy* is ``"xgboost"``,
                 perform randomised + grid search.  Set ``False`` for a quick
                 baseline fit.

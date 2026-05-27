@@ -238,7 +238,7 @@ def _render_sidebar() -> tuple[Path, int, bool]:
         )
         if not found:
             st.warning(
-                "The notebook trains the model **in memory only** — it does not "
+                "The notebook trains the model **in memory only** - it does not "
                 "create this file automatically.\n\n"
                 "**Fix:** Paste `scripts/save_model_cell.py` in a new cell at the "
                 "end of `Epilepsy.ipynb` (after SMOTE training), **or** run:\n\n"
@@ -431,7 +431,7 @@ def _render_results(result, edf_path: Path | None, channel_idx: int, show_eeg: b
             if fig:
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                st.warning("EEG preview unavailable — check that the EDF file is valid.")
+                st.warning("EEG preview unavailable - check that the EDF file is valid.")
         else:
             st.info(
                 'Enable **Show EEG signal overlay** in the sidebar, '

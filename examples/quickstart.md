@@ -1,4 +1,4 @@
-# Quickstart — seizure detection
+# Quickstart - seizure detection
 
 ## What this software does
 

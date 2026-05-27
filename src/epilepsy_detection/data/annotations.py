@@ -52,9 +52,9 @@ class AnnotationParser:
 
     Supports three input modes:
 
-    * **Explicit seconds** — ``from_seconds(start_sec, end_sec)``
-    * **Explicit epochs** — ``from_epochs(start_epoch, end_epoch)``
-    * **CHB-MIT summary file** — ``load_summary_file(path)``
+    * **Explicit seconds** - ``from_seconds(start_sec, end_sec)``
+    * **Explicit epochs** - ``from_epochs(start_epoch, end_epoch)``
+    * **CHB-MIT summary file** - ``load_summary_file(path)``
     """
 
     def from_seconds(

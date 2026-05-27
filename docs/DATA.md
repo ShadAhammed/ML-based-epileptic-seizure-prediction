@@ -19,15 +19,15 @@ Reviewers and employers can evaluate this project from the **architecture, code 
 | Dataset | [CHB-MIT Scalp EEG Database v1.0.0](https://physionet.org/content/chbmit/1.0.0/) |
 | Registration | [PhysioNet account](https://physionet.org/register/) |
 | Credentialing | Complete the [Credentialed Health Data Use Agreement](https://physionet.org/settings/credentialing/) on PhysioNet |
-| Citation | Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet (2000) — see dataset page |
+| Citation | Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet (2000) - see dataset page |
 
 ### Download steps
 
 1. Sign in at [PhysioNet](https://physionet.org/).
 2. Open [chbmit/1.0.0](https://physionet.org/content/chbmit/1.0.0/) and click **Access the data** (after credentialing is approved).
 3. Download subject folders (e.g. `chb01`, `chb02`, …) containing:
-   - `*.edf` — EEG recordings
-   - `*-summary.txt` — seizure onset/offset annotations
+   - `*.edf` - EEG recordings
+   - `*-summary.txt` - seizure onset/offset annotations
 4. Extract archives locally into a directory **outside** git tracking, for example:
 
 ```
@@ -73,7 +73,7 @@ These paths are listed in [`.gitignore`](../.gitignore) and must remain on your 
 
 ## Running without clinical data
 
-**Unit and smoke tests** use synthetic EEG-like signals and random feature matrices — no PhysioNet download required:
+**Unit and smoke tests** use synthetic EEG-like signals and random feature matrices - no PhysioNet download required:
 
 ```bash
 pip install -e ".[dev]"
@@ -97,6 +97,6 @@ Seizure End Time: 2447 seconds
 - **Reproducibility**: `config/default.yaml`, `requirements.txt`, GitHub Actions CI.
 - **Data**: obtained by the reviewer under PhysioNet terms; not redistributed in this repo.
 
-Research notebooks live under `notebooks/` locally and are **gitignored** — use them to train `models/seizure_model.joblib` for the dashboard.
+Research notebooks live under `notebooks/` locally and are **gitignored** - use them to train `models/seizure_model.joblib` for the dashboard.
 
 For questions about the original research context, contact the author listed in [README.md](../README.md).

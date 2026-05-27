@@ -17,7 +17,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-train_app = typer.Typer(help="Training commands (notebook/research — not required for detection).")
+train_app = typer.Typer(help="Training commands (notebook/research - not required for detection).")
 app.add_typer(train_app, name="train-cmd")
 
 

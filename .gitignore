@@ -11,7 +11,7 @@ build/
 venv/
 env/
 
-# Jupyter / research notebooks (local only — never commit)
+# Jupyter / research notebooks (local only - never commit)
 /notebooks/
 .ipynb_checkpoints/
 *.ipynb
@@ -21,7 +21,7 @@ env/
 .vscode/
 *.swp
 
-# Clinical data and artifacts (root only) — never commit to public GitHub
+# Clinical data and artifacts (root only) - never commit to public GitHub
 /data/**
 !/data/.gitkeep
 /models/**

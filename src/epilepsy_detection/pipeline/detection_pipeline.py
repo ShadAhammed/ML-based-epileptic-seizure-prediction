@@ -76,7 +76,7 @@ class DetectionPipeline:
 
     This is the main class that external code (dashboard, CLI, API) should
     interact with.  It exposes a single high-level method:
-    :meth:`detect_from_edf` — just provide an EDF file and a model path.
+    :meth:`detect_from_edf` - just provide an EDF file and a model path.
 
     Training utilities (:meth:`train`, :meth:`extract_features`) are included
     for completeness but are not part of the normal detection workflow.
@@ -106,7 +106,7 @@ class DetectionPipeline:
         """Analyse an EDF recording and return all predicted seizure windows.
 
         This is the single entry point for the dashboard, CLI ``detect``
-        command, and REST API.  No seizure start/end input is required —
+        command, and REST API.  No seizure start/end input is required -
         the model decides where (if anywhere) seizure activity occurs.
 
         Args:
@@ -123,17 +123,17 @@ class DetectionPipeline:
         """
         edf_path = Path(edf_path)
 
-        # Step 1 — Extract features (no labels; purely for inference).
+        # Step 1 - Extract features (no labels; purely for inference).
         features = self.extractor.extract_from_edf(edf_path)
 
-        # Step 2 — Load model (if not already loaded or if a different path).
+        # Step 2 - Load model (if not already loaded or if a different path).
         if self._artifacts is None or self._artifacts.model_path != Path(model_path):
             self.load_model(model_path)
 
-        # Step 3 — Per-epoch prediction.
+        # Step 3 - Per-epoch prediction.
         per_epoch = self._run_inference(features)
 
-        # Step 4 — Merge consecutive ictal epochs into seizure windows.
+        # Step 4 - Merge consecutive ictal epochs into seizure windows.
         seizures = find_seizure_intervals(
             per_epoch["epoch_id"],
             per_epoch["predicted"],

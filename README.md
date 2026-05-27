@@ -8,7 +8,7 @@ Designed for use with the [CHB-MIT Scalp EEG Database](https://physionet.org/con
 
 ## Purpose
 
-**Detect when seizures occur in an EDF recording** — not train models (that stays in the legacy notebook).
+**Detect when seizures occur in an EDF recording** - not train models (that stays in the legacy notebook).
 
 1. Load an EDF file with EEG data  
 2. Extract per-second features (same logic as notebook `SzData`, without manual seizure window input)  
@@ -21,11 +21,11 @@ Designed for use with the [CHB-MIT Scalp EEG Database](https://physionet.org/con
 - **Web dashboard**: upload EDF → **Detect Seizures** → intervals, timeline, CSV export (`epilepsy dashboard`)
 - **CLI**: `epilepsy detect --edf recording.edf --model models/seizure_model.joblib`
 - **REST API** (FastAPI): upload feature files for batch prediction
-- **Training** (optional): `epilepsy train-cmd fit` — for notebook/research only
+- **Training** (optional): `epilepsy train-cmd fit` - for notebook/research only
 
 ## Author
 
-Abu Shad Ahammed — [abu.ahammed@uni-siegen.de](mailto:abu.ahammed@uni-siegen.de)  
+Abu Shad Ahammed - [abu.ahammed@uni-siegen.de](mailto:abu.ahammed@uni-siegen.de)  
 Chair of Embedded Systems, Universität Siegen
 
 ## Installation
@@ -47,7 +47,7 @@ copy .env.example .env
 
 **To run on real EEG:** register and get credentialed on [PhysioNet](https://physionet.org/), then download [CHB-MIT](https://physionet.org/content/chbmit/1.0.0/) into a local folder such as `./data/raw/` (gitignored). Full instructions: **[docs/DATA.md](docs/DATA.md)**.
 
-**To evaluate the project without downloading data:** run `pytest tests -v` — tests use synthetic signals only.
+**To evaluate the project without downloading data:** run `pytest tests -v` - tests use synthetic signals only.
 
 ### Local data layout (after download)
 
@@ -67,17 +67,17 @@ pip install -e .
 epilepsy dashboard
 ```
 
-Opens **http://localhost:8501** — upload an EDF and click **Detect Seizures**.
+Opens **http://localhost:8501** - upload an EDF and click **Detect Seizures**.
 
 On Windows you can also double-click `run_dashboard.bat`.
 
 ### 2. Pre-trained model
 
-The notebook trains the model **in memory only** — you must save it once:
+The notebook trains the model **in memory only** - you must save it once:
 
-**Option A** — new cell at end of your local `notebooks/legacy/Epilepsy.ipynb` (paste from [`scripts/save_model_cell.py`](scripts/save_model_cell.py))
+**Option A** - new cell at end of your local `notebooks/legacy/Epilepsy.ipynb` (paste from [`scripts/save_model_cell.py`](scripts/save_model_cell.py))
 
-**Option B** — from a labeled feature file:
+**Option B** - from a labeled feature file:
 
 ```bash
 python scripts/save_model.py --features path/to/features.xlsx --strategy smote
@@ -126,9 +126,9 @@ notebooks/                   # Local research notebooks (gitignored)
 tests/                       # Unit and smoke tests
 ```
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design
-- [docs/DATA.md](docs/DATA.md) — where to obtain CHB-MIT data (required for full pipeline)
-- [examples/quickstart.md](examples/quickstart.md) — end-to-end workflow
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - system design
+- [docs/DATA.md](docs/DATA.md) - where to obtain CHB-MIT data (required for full pipeline)
+- [examples/quickstart.md](examples/quickstart.md) - end-to-end workflow
 
 ## Development
 
@@ -140,9 +140,9 @@ pytest tests -v
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT License - see [LICENSE](LICENSE).
 
 ## Version history
 
-- **1.0.0** — OOP refactor: package, CLI, API, GUI, tests, CI
-- **0.1** — Initial notebook release
+- **1.0.0** - OOP refactor: package, CLI, API, GUI, tests, CI
+- **0.1** - Initial notebook release

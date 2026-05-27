@@ -104,7 +104,7 @@ def fig_seizure_gantt(
 
     if not seizures:
         fig.update_layout(
-            title=dict(text="Seizure windows — none detected", font=dict(size=14)),
+            title=dict(text="Seizure windows - none detected", font=dict(size=14)),
             xaxis_title="Time (seconds)",
             height=160,
             **_BASE_LAYOUT,
@@ -367,7 +367,7 @@ def fig_eeg_with_seizures(
 
     fig.update_layout(
         title=dict(
-            text=f"EEG signal — channel <b>{ch_name}</b> with predicted seizure regions",
+            text=f"EEG signal - channel <b>{ch_name}</b> with predicted seizure regions",
             font=dict(size=14),
         ),
         xaxis_title="Time (seconds)",
@@ -403,7 +403,7 @@ def fig_epoch_raster(df: pd.DataFrame) -> go.Figure:
         color="State",
         color_discrete_map={"Interictal": "#94a3b8", "Ictal": _ICTAL_SOLID},
         labels={"time_seconds": "Time (seconds)"},
-        title="Epoch raster — each dot = 1 second",
+        title="Epoch raster - each dot = 1 second",
     )
     fig.update_traces(marker=dict(size=7, symbol="circle", opacity=0.85))
     fig.update_yaxes(visible=False, showticklabels=False)

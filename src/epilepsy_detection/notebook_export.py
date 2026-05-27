@@ -40,11 +40,11 @@ def save_trained_model(
     Call this from a notebook cell after training, passing the objects that
     already exist in the kernel:
 
-    * ``scaler`` — the :class:`~sklearn.preprocessing.MinMaxScaler` fit on ``X``
-    * ``rfe`` — the fitted :class:`~sklearn.feature_selection.RFECV` object
-    * ``Smodel`` (or ``model``) — the trained XGBoost / RUSBoost estimator
-    * ``feature_columns`` — full list of column names in ``X`` (before RFE)
-    * ``f`` — list of selected feature names returned by ``GetFeature``
+    * ``scaler`` - the :class:`~sklearn.preprocessing.MinMaxScaler` fit on ``X``
+    * ``rfe`` - the fitted :class:`~sklearn.feature_selection.RFECV` object
+    * ``Smodel`` (or ``model``) - the trained XGBoost / RUSBoost estimator
+    * ``feature_columns`` - full list of column names in ``X`` (before RFE)
+    * ``f`` - list of selected feature names returned by ``GetFeature``
 
     Args:
         scaler: Fitted MinMax scaler used on the training feature matrix.

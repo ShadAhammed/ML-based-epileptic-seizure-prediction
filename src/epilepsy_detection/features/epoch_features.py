@@ -148,7 +148,7 @@ class EpochFeatureExtractor(FeatureExtractor):
         # repeating the computation inside the epoch loop.
         baseline_stats = self._compute_baseline_stats(data, 0, baseline_end, n_channels)
 
-        # Epoch label set — empty for inference, populated for training.
+        # Epoch label set - empty for inference, populated for training.
         sz_epochs = AnnotationParser.seizure_epoch_set(seizure_interval)
 
         rows: list[dict] = []

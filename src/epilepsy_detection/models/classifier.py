@@ -3,10 +3,10 @@ Seizure classifier: feature scaling, recursive feature elimination, and XGBoost.
 
 This module implements the core ML pipeline described in the research notebook:
 
-1. **MinMaxScaler** — normalise all features to [0, 1].
-2. **RFECV** — recursively eliminate the least informative features using
+1. **MinMaxScaler** - normalise all features to [0, 1].
+2. **RFECV** - recursively eliminate the least informative features using
    cross-validated XGBoost importance scores.
-3. **XGBClassifier** — the final gradient-boosted tree classifier, optionally
+3. **XGBClassifier** - the final gradient-boosted tree classifier, optionally
    tuned via randomised and grid search.
 
 The trained scaler and RFECV selector are persisted alongside the model so
@@ -277,7 +277,7 @@ class SeizureClassifier:
         """Apply the fitted scaler and RFECV transform to new feature data.
 
         This ensures the same preprocessing pipeline is used at inference
-        as was used during training — avoiding train/test leakage.
+        as was used during training - avoiding train/test leakage.
 
         Args:
             x: Raw feature matrix with the same columns as the training data.

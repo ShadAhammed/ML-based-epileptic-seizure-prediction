@@ -5,11 +5,11 @@ EEG seizure datasets are heavily imbalanced: ictal epochs are a small
 fraction of typical recordings.  This module provides two strategies used
 in the original notebook:
 
-* **SMOTE** — Synthetic Minority Over-sampling Technique.  Generates
+* **SMOTE** - Synthetic Minority Over-sampling Technique.  Generates
   synthetic ictal samples to balance the training set before fitting
   XGBoost.
 
-* **RUSBoost** — Random Under-Sampling Boosting.  An AdaBoost variant
+* **RUSBoost** - Random Under-Sampling Boosting.  An AdaBoost variant
   that under-samples the majority class at each boosting round.
 
 Both wrappers preserve the DataFrame column names and index, making them

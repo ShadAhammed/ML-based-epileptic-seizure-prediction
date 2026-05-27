@@ -4,7 +4,7 @@
 
 Epilepsy Detection is a layered Python application that converts the original monolithic Jupyter notebook into testable, headless modules with multiple entry points.
 
-**Data:** No patient EEG is stored in this repository. Reviewers run tests with synthetic data; full pipeline execution requires locally downloaded [CHB-MIT](https://physionet.org/content/chbmit/1.0.0/) files — see [DATA.md](DATA.md).
+**Data:** No patient EEG is stored in this repository. Reviewers run tests with synthetic data; full pipeline execution requires locally downloaded [CHB-MIT](https://physionet.org/content/chbmit/1.0.0/) files - see [DATA.md](DATA.md).
 
 ```mermaid
 flowchart TB

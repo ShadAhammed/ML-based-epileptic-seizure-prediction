@@ -7,6 +7,8 @@ alwaysApply: true
 
 Focused rules live in `.cursor/rules/*.mdc`. Each file owns one concern.
 
+Never use the em dash (`—`); use ASCII hyphen (`-`) only (see `05-ascii-punctuation.mdc`).
+
 Priority on conflicts:
 1. Explicit user instruction for the current task
 2. Security/privacy and irreversible-change safeguards (00-core-security)

@@ -8,7 +8,7 @@ It also provides a higher-level :class:`Evaluator` class used by
 
 Key metrics for seizure detection:
     - **Sensitivity** (recall): fraction of true ictal epochs correctly identified.
-      Critical — a low sensitivity means missed seizures.
+      Critical - a low sensitivity means missed seizures.
     - **Specificity**: fraction of true interictal epochs correctly classified.
       A low specificity means excess false alarms.
     - **F1-score**: harmonic mean of precision and sensitivity.

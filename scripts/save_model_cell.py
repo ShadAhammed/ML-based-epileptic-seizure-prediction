@@ -45,4 +45,4 @@ out = save_trained_model(
 )
 
 print(f"Model saved to: {out}")
-print("Restart the dashboard — the sidebar should show a green checkmark.")
+print("Restart the dashboard - the sidebar should show a green checkmark.")
