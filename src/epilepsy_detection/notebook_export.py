@@ -5,7 +5,7 @@ The legacy ``Epilepsy.ipynb`` trains ``Smodel`` (XGBoost + SMOTE) in memory but
 never writes a file to disk.  The dashboard and CLI load a persisted artifact
 produced by :func:`save_trained_model`.
 
-Run the snippet in ``notebooks/save_model_cell.py`` at the end of your notebook
+Run the snippet in ``scripts/save_model_cell.py`` at the end of your notebook
 (after the SMOTE training cell), or train from a labeled feature file with::
 
     python scripts/save_model.py --features path/to/features.xlsx

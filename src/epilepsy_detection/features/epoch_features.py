@@ -29,13 +29,14 @@ training.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
 from scipy.signal import firwin, lfilter
 
 from epilepsy_detection.config.settings import Settings
-from epilepsy_detection.data.annotations import SeizureInterval
+from epilepsy_detection.data.annotations import AnnotationParser, SeizureInterval
 from epilepsy_detection.data.edf_loader import EDFLoader
 from epilepsy_detection.features.extractor import FeatureExtractor
 
@@ -114,7 +115,7 @@ class EpochFeatureExtractor(FeatureExtractor):
     def extract_from_matrix(
         self,
         data: pd.DataFrame,
-        seizure_interval: SeizureInterval | None = None,
+        seizure_interval: SeizureInterval | Sequence[SeizureInterval] | None = None,
     ) -> pd.DataFrame:
         """Extract features from a pre-loaded channel-x-samples DataFrame.
 
@@ -148,9 +149,7 @@ class EpochFeatureExtractor(FeatureExtractor):
         baseline_stats = self._compute_baseline_stats(data, 0, baseline_end, n_channels)
 
         # Epoch label set — empty for inference, populated for training.
-        sz_epochs: set[int] = (
-            set(seizure_interval.epoch_range) if seizure_interval is not None else set()
-        )
+        sz_epochs = AnnotationParser.seizure_epoch_set(seizure_interval)
 
         rows: list[dict] = []
         for epoch_idx in range(n_epochs):

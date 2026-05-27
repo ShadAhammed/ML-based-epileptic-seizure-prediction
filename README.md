@@ -1,4 +1,4 @@
-# Epilepsy Detection
+# EpilepsyDetector
 
 Machine learning based software for **ictal (seizure) period detection** from scalp EEG, refactored from the original CHB-MIT research notebook.
 
@@ -31,8 +31,8 @@ Chair of Embedded Systems, Universität Siegen
 ## Installation
 
 ```bash
-git clone https://github.com/ShadAhammed/ML-based-epileptic-seizure-prediction.git
-cd ML-based-epileptic-seizure-prediction
+git clone https://github.com/ShadAhammed/EpilepsyDetector.git
+cd EpilepsyDetector
 python -m venv .venv
 .venv\Scripts\activate   # Windows
 pip install -e ".[dev]"
@@ -75,7 +75,7 @@ On Windows you can also double-click `run_dashboard.bat`.
 
 The notebook trains the model **in memory only** — you must save it once:
 
-**Option A** — new cell at end of `notebooks/legacy/Epilepsy.ipynb` (run [`notebooks/save_model_cell.py`](notebooks/save_model_cell.py))
+**Option A** — new cell at end of your local `notebooks/legacy/Epilepsy.ipynb` (paste from [`scripts/save_model_cell.py`](scripts/save_model_cell.py))
 
 **Option B** — from a labeled feature file:
 
@@ -83,7 +83,7 @@ The notebook trains the model **in memory only** — you must save it once:
 python scripts/save_model.py --features path/to/features.xlsx --strategy smote
 ```
 
-This creates `models/seizure_model.joblib` (local only, not in git). See [notebooks/README.md](notebooks/README.md).
+This creates `models/seizure_model.joblib` (local only, not in git). The `notebooks/` folder is gitignored.
 
 ### 3. Detect seizures (CLI)
 

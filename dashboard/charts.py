@@ -8,7 +8,7 @@ Design conventions:
     - Ictal (seizure) regions: crimson ``#b91c1c``
     - Interictal (normal) regions: slate blue ``#64748b``
     - Probability curve: deep blue ``#1d4ed8``
-    - Background panels: off-white ``#f8fafc``
+    - Background panels: dark navy ``#0f2137``
     - Annotations use the same crimson for consistency.
 """
 
@@ -29,14 +29,16 @@ _ICTAL_FILL = "rgba(185, 28, 28, 0.18)"
 _ICTAL_FILL_STRONG = "rgba(185, 28, 28, 0.45)"
 _INTERICTAL_FILL = "rgba(100, 116, 139, 0.25)"
 _PROB_LINE = "#1d4ed8"
-_BG = "#f8fafc"
-_GRID = "#e2e8f0"
+_BG = "#0f2137"
+_GRID = "#1e3a5f"
+_PAPER = "#0a1628"
+_TEXT = "#e2e8f0"
 
 # ── Shared layout defaults ───────────────────────────────────────────────────
 _BASE_LAYOUT = dict(
     plot_bgcolor=_BG,
-    paper_bgcolor="white",
-    font=dict(family="Inter, Segoe UI, sans-serif", size=12, color="#1e293b"),
+    paper_bgcolor=_PAPER,
+    font=dict(family="Inter, Segoe UI, sans-serif", size=12, color=_TEXT),
     xaxis=dict(showgrid=True, gridcolor=_GRID, zeroline=False),
     yaxis=dict(showgrid=True, gridcolor=_GRID, zeroline=False),
     margin=dict(t=50, b=40, l=60, r=30),
@@ -94,7 +96,7 @@ def fig_seizure_gantt(
             x=[max(recording_seconds, 1)],
             y=["Recording"],
             orientation="h",
-            marker=dict(color="#e2e8f0", line=dict(color="#cbd5e1", width=1)),
+            marker=dict(color="#1e3a5f", line=dict(color="#334155", width=1)),
             showlegend=False,
             hoverinfo="skip",
         )
@@ -410,6 +412,6 @@ def fig_epoch_raster(df: pd.DataFrame) -> go.Figure:
         margin=dict(t=45, b=30, l=30, r=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         plot_bgcolor=_BG,
-        paper_bgcolor="white",
+        paper_bgcolor=_PAPER,
     )
     return fig

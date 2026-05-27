@@ -56,7 +56,7 @@ from charts import (  # noqa: E402
 
 # ── Page configuration ────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Epilepsy Seizure Detection",
+    page_title="EpilepsyDetector",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -66,69 +66,103 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Typography */
+    /* Typography + dark navy shell */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+
+    .stApp {
+        background-color: #0a1628;
+        background-image: linear-gradient(180deg, #0a1628 0%, #0d1f36 100%);
+    }
+    section[data-testid="stSidebar"] {
+        background-color: #0d1f36;
+        border-right: 1px solid #1e3a5f;
+    }
+    section[data-testid="stSidebar"] .stMarkdown,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span {
+        color: #cbd5e1;
+    }
+    .main .block-container {
+        color: #e2e8f0;
+    }
+    h1, h2, h3, h4, h5, h6, p, label, span, div {
+        color: inherit;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #0f2137;
+        border-radius: 8px;
+        padding: 4px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #94a3b8;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #1e3a5f !important;
+        color: #e2e8f0 !important;
+    }
 
     /* App header */
     .app-title {
         font-size: 1.85rem; font-weight: 700;
-        color: #0f172a; letter-spacing: -0.02em; margin-bottom: 0;
+        color: #f1f5f9; letter-spacing: -0.02em; margin-bottom: 0;
     }
     .app-subtitle {
-        font-size: 0.95rem; color: #64748b; margin-top: 0.1rem;
+        font-size: 0.95rem; color: #94a3b8; margin-top: 0.1rem;
     }
 
     /* Verdict cards */
     .verdict-seizure {
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-        border: 2px solid #b91c1c;
+        background: linear-gradient(135deg, #3b1520 0%, #4a1a24 100%);
+        border: 2px solid #f87171;
         border-radius: 12px; padding: 1.4rem 1.8rem;
         text-align: center;
     }
-    .verdict-seizure h2 { color: #b91c1c; font-size: 1.7rem; margin: 0 0 0.3rem 0; }
-    .verdict-seizure p  { color: #7f1d1d; font-size: 1rem; margin: 0; }
+    .verdict-seizure h2 { color: #fca5a5; font-size: 1.7rem; margin: 0 0 0.3rem 0; }
+    .verdict-seizure p  { color: #fecaca; font-size: 1rem; margin: 0; }
 
     .verdict-normal {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        border: 2px solid #16a34a;
+        background: linear-gradient(135deg, #0f2a1f 0%, #143528 100%);
+        border: 2px solid #4ade80;
         border-radius: 12px; padding: 1.4rem 1.8rem;
         text-align: center;
     }
-    .verdict-normal h2 { color: #15803d; font-size: 1.7rem; margin: 0 0 0.3rem 0; }
-    .verdict-normal p  { color: #14532d; font-size: 1rem; margin: 0; }
+    .verdict-normal h2 { color: #86efac; font-size: 1.7rem; margin: 0 0 0.3rem 0; }
+    .verdict-normal p  { color: #bbf7d0; font-size: 1rem; margin: 0; }
 
     /* Metric cards */
     div[data-testid="stMetric"] {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
+        background: #0f2137;
+        border: 1px solid #1e3a5f;
         border-radius: 10px;
         padding: 0.9rem 1.1rem;
     }
-    div[data-testid="stMetric"] > div:first-child { color: #64748b; font-size: 0.82rem; }
-    div[data-testid="stMetric"] > div:last-child  { color: #0f172a; font-size: 1.35rem; }
+    div[data-testid="stMetric"] > div:first-child { color: #94a3b8; font-size: 0.82rem; }
+    div[data-testid="stMetric"] > div:last-child  { color: #f1f5f9; font-size: 1.35rem; }
 
     /* Seizure window badge */
     .sz-window {
-        background: #fef2f2;
-        border-left: 4px solid #b91c1c;
+        background: #1a2744;
+        border-left: 4px solid #f87171;
         border-radius: 0 8px 8px 0;
         padding: 0.6rem 1rem;
         margin: 0.4rem 0;
         font-size: 0.95rem;
         line-height: 1.6;
+        color: #e2e8f0;
     }
 
     /* Model status badge */
-    .model-ok   { color: #16a34a; font-weight: 600; }
-    .model-miss { color: #b91c1c; font-weight: 600; }
+    .model-ok   { color: #4ade80; font-weight: 600; }
+    .model-miss { color: #f87171; font-weight: 600; }
 
     /* Divider */
-    hr.light { border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+    hr.light { border: none; border-top: 1px solid #1e3a5f; margin: 1rem 0; }
 
     /* Step indicator */
     .step-label {
-        font-size: 0.78rem; font-weight: 600; color: #64748b;
+        font-size: 0.78rem; font-weight: 600; color: #94a3b8;
         text-transform: uppercase; letter-spacing: 0.06em;
         margin-bottom: 0.3rem;
     }
@@ -179,8 +213,8 @@ def _render_sidebar() -> tuple[Path, int, bool]:
         st.markdown(
             "<div style='text-align:center; padding:0.5rem 0 1rem'>"
             "<span style='font-size:2.2rem'>🧠</span><br>"
-            "<span style='font-weight:700; font-size:1.1rem; color:#0f172a'>Epilepsy Detection</span><br>"
-            "<span style='font-size:0.8rem; color:#64748b'>CHB-MIT · XGBoost · v1.0</span>"
+            "<span style='font-weight:700; font-size:1.1rem; color:#f1f5f9'>EpilepsyDetector</span><br>"
+            "<span style='font-size:0.8rem; color:#94a3b8'>CHB-MIT · XGBoost · v1.0</span>"
             "</div>",
             unsafe_allow_html=True,
         )
@@ -206,7 +240,7 @@ def _render_sidebar() -> tuple[Path, int, bool]:
             st.warning(
                 "The notebook trains the model **in memory only** — it does not "
                 "create this file automatically.\n\n"
-                "**Fix:** Run `notebooks/save_model_cell.py` in a new cell at the "
+                "**Fix:** Paste `scripts/save_model_cell.py` in a new cell at the "
                 "end of `Epilepsy.ipynb` (after SMOTE training), **or** run:\n\n"
                 "`python scripts/save_model.py --features your_features.xlsx`"
             )
@@ -255,11 +289,11 @@ def _render_welcome() -> None:
     """Show usage instructions when no analysis has been run yet."""
     st.markdown(
         """
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;
+        <div style="background:#0f2137; border:1px solid #1e3a5f; border-radius:12px;
                     padding:2rem; text-align:center; margin-top:1rem;">
             <div style="font-size:2.5rem; margin-bottom:0.5rem">📂</div>
-            <h3 style="color:#0f172a; margin:0 0 0.5rem">Upload an EDF recording</h3>
-            <p style="color:#64748b; max-width:420px; margin:0 auto">
+            <h3 style="color:#f1f5f9; margin:0 0 0.5rem">Upload an EDF recording</h3>
+            <p style="color:#94a3b8; max-width:420px; margin:0 auto">
                 Select a <code>.edf</code> file from the CHB-MIT database or any
                 compatible EEG system, then click <strong>Analyse Recording</strong>.
             </p>

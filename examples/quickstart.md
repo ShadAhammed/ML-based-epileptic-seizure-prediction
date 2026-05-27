@@ -8,8 +8,8 @@
 ## 1. Install
 
 ```bash
-git clone https://github.com/ShadAhammed/ML-based-epileptic-seizure-prediction.git
-cd ML-based-epileptic-seizure-prediction
+git clone https://github.com/ShadAhammed/EpilepsyDetector.git
+cd EpilepsyDetector
 pip install -e .
 ```
 
@@ -32,7 +32,7 @@ Browser opens at **http://localhost:8501**:
 
 The notebook trains in memory; the dashboard needs a file on disk.
 
-**From the notebook** (after SMOTE cell): paste and run [`notebooks/save_model_cell.py`](../notebooks/save_model_cell.py) in a new cell.
+**From the notebook** (after SMOTE cell): paste and run [`scripts/save_model_cell.py`](../scripts/save_model_cell.py) in a new cell.
 
 **From a feature file:**
 
@@ -42,7 +42,7 @@ python scripts/save_model.py --features path/to/features.xlsx --strategy smote
 
 Output: `models/seizure_model.joblib`
 
-See [notebooks/README.md](../notebooks/README.md) for details.
+The `notebooks/` folder is gitignored (local research only).
 
 ## 4. CLI (alternative)
 

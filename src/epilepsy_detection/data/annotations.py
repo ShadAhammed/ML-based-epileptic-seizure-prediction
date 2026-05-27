@@ -15,6 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -106,8 +107,12 @@ class AnnotationParser:
         current_start: int | None = None
 
         for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
-            start_match = re.search(r"Seizure\s+Start[^:]*:\s*(\d+)", line, re.I)
-            end_match = re.search(r"Seizure\s+End[^:]*:\s*(\d+)", line, re.I)
+            start_match = re.search(
+                r"Seizure(?:\s+\d+)?\s+Start[^:]*:\s*(\d+)", line, re.I
+            )
+            end_match = re.search(
+                r"Seizure(?:\s+\d+)?\s+End[^:]*:\s*(\d+)", line, re.I
+            )
 
             if start_match:
                 current_start = int(start_match.group(1))
@@ -121,3 +126,63 @@ class AnnotationParser:
                 current_start = None
 
         return intervals
+
+    def load_summary_by_file(self, path: str | Path) -> dict[str, list[SeizureInterval]]:
+        """Parse a CHB-MIT summary file into per-EDF seizure intervals.
+
+        Args:
+            path: Path to ``*-summary.txt``.
+
+        Returns:
+            Mapping from EDF basename (e.g. ``chb01_03.edf``) to seizure intervals
+            in that recording.  Files with no seizures map to an empty list.
+        """
+        path = Path(path)
+        by_file: dict[str, list[SeizureInterval]] = {}
+        current_file: str | None = None
+        current_start: int | None = None
+
+        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            file_match = re.search(r"File\s+Name:\s*(\S+)", line, re.I)
+            if file_match:
+                current_file = file_match.group(1)
+                by_file.setdefault(current_file, [])
+                current_start = None
+                continue
+
+            if current_file is None:
+                continue
+
+            start_match = re.search(
+                r"Seizure(?:\s+\d+)?\s+Start[^:]*:\s*(\d+)", line, re.I
+            )
+            end_match = re.search(
+                r"Seizure(?:\s+\d+)?\s+End[^:]*:\s*(\d+)", line, re.I
+            )
+
+            if start_match:
+                current_start = int(start_match.group(1))
+            elif end_match and current_start is not None:
+                by_file[current_file].append(
+                    SeizureInterval(
+                        start_epoch=current_start,
+                        end_epoch=int(end_match.group(1)),
+                    )
+                )
+                current_start = None
+
+        return by_file
+
+    @staticmethod
+    def seizure_epoch_set(
+        intervals: SeizureInterval | Sequence[SeizureInterval] | None,
+    ) -> set[int]:
+        """Collect all 1-based epoch IDs labeled ictal across one or more intervals."""
+        if intervals is None:
+            return set()
+        if isinstance(intervals, SeizureInterval):
+            return set(intervals.epoch_range)
+        merged: set[int] = set()
+        for interval in intervals:
+            merged.update(interval.epoch_range)
+        return merged

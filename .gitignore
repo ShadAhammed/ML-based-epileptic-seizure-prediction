@@ -11,10 +11,8 @@ build/
 venv/
 env/
 
-# Jupyter — legacy .ipynb stays local; helper scripts are tracked
-/notebooks/**
-!notebooks/README.md
-!notebooks/*.py
+# Jupyter / research notebooks (local only — never commit)
+/notebooks/
 .ipynb_checkpoints/
 *.ipynb
 
